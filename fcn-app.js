@@ -813,6 +813,7 @@
     return { text: "追蹤中", cls: "fcn-status-tracking" };
   }
 
+  /** 下一個排定的配息週期點（用於算利息期數、到期日），非 KO 每日比價日 */
   function comboNextValuationText(combo) {
     const firstYmd = firstValuationYmd(combo);
     if (!firstYmd) return "—";
@@ -821,6 +822,14 @@
     const today = todayYmdLocal();
     const next = dates.find((d) => d && d > today);
     return next ? formatFcnDateSlashDisplay(next) : "—";
+  }
+
+  /** 「下次比價日」欄位文字：尚未開始追蹤時顯示初次比價日；已開始追蹤後 KO 為每日比價，顯示「每日比價中」 */
+  function comboNextKoCheckText(combo) {
+    const firstYmd = firstValuationYmd(combo);
+    if (!firstYmd) return "—";
+    if (!isValuationDateDone(firstYmd)) return formatFcnDateSlashDisplay(firstYmd);
+    return "每日比價中";
   }
 
   function comboDaysToMaturityText(combo) {
@@ -844,6 +853,7 @@
       <td class="mono">${escapeHtmlAttr(invested)}</td>
       <td class="mono">${escapeHtmlAttr(rate)}%</td>
       <td><span class="fcn-status-badge ${status.cls}">${escapeHtmlAttr(status.text)}</span></td>
+      <td class="mono">${escapeHtmlAttr(comboNextKoCheckText(combo))}</td>
       <td class="mono">${escapeHtmlAttr(comboNextValuationText(combo))}</td>
       <td class="mono">${escapeHtmlAttr(comboDaysToMaturityText(combo))}</td>
     </tr>`;
