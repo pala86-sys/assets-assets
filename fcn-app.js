@@ -490,13 +490,18 @@
     return normalizeFcnDateStr(dates[slotCount - 1] ?? "");
   }
 
+  /** DOM 上的百分比輸入框只反映目前作用中的組合；非作用中組合一律改用該組合自己存的百分比，避免混用到別組合的門檻 */
+  function isComboActiveInDom(combo) {
+    return combo.id === state.activeComboId;
+  }
+
   function kiFractionFromDom(combo) {
     const pctFrac = (inp, fb) => {
       const v = inp ? parseNum(normalizeNumericInputString(inp.value)) : 0;
       const base = v > 0 ? v : parseNum(fb);
       return base / 100;
     };
-    return pctFrac(els.fcnPctKi, combo.kiPct);
+    return pctFrac(isComboActiveInDom(combo) ? els.fcnPctKi : null, combo.kiPct);
   }
 
   function strikeFractionFromDom(combo) {
@@ -505,7 +510,7 @@
       const base = v > 0 ? v : parseNum(fb);
       return base / 100;
     };
-    return pctFrac(els.fcnPctStrike, combo.strikePct);
+    return pctFrac(isComboActiveInDom(combo) ? els.fcnPctStrike : null, combo.strikePct);
   }
 
   function closeOnOrBeforeFromBars(bars, targetYmd) {
@@ -980,7 +985,7 @@
       const base = v > 0 ? v : parseNum(fb);
       return base / 100;
     };
-    return pctFrac(els.fcnPctKo, combo.koPct);
+    return pctFrac(isComboActiveInDom(combo) ? els.fcnPctKo : null, combo.koPct);
   }
 
   /** 有代號且期初價 > 0 之標的，列入提前出場是否「全達標」計算 */
