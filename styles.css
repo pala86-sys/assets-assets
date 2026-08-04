@@ -1,0 +1,1243 @@
+:root {
+  --bg: #0a0e14;
+  --surface: #141b26;
+  --surface-hover: #1c2530;
+  --border: #263244;
+  --text: #e7edf5;
+  --text-muted: #8b9aad;
+  --accent: #3d9cfd;
+  --accent-dim: #2563a8;
+  --success: #34d399;
+  --danger: #f87171;
+  --radius: 10px;
+  --font-sans: "IBM Plex Sans TC", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(61, 156, 253, 0.12), transparent),
+    var(--bg);
+}
+
+.app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+.header-inner h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  max-width: 52ch;
+}
+
+.subtitle-guide {
+  max-width: 56rem;
+}
+
+.subtitle-guide p {
+  margin: 0 0 0.35rem;
+  line-height: 1.55;
+}
+
+.subtitle-guide .subtitle-heading {
+  margin-top: 0.65rem;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.subtitle-guide .subtitle-heading:first-child {
+  margin-top: 0;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.25rem 1.5rem;
+}
+
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.summary-panel h2 {
+  margin-bottom: 0.75rem;
+}
+
+.summary-fx-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.summary-fx-input-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.summary-fx-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.fx-fetch-status {
+  font-size: 0.8rem;
+  color: var(--text);
+  flex: 1;
+  min-width: 12ch;
+}
+
+.fx-fetch-disclaimer {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  max-width: 85ch;
+}
+
+.fx-fetch-disclaimer a {
+  color: var(--accent);
+}
+
+.fx-label {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.fx-input {
+  width: 6.5rem;
+  max-width: 100%;
+}
+
+.fx-suffix {
+  flex: 1;
+  min-width: 12ch;
+  line-height: 1.35;
+}
+
+.summary-rows .row-available .value-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+  text-align: right;
+}
+
+.summary-rows .available-fx {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.summary-rows .available-fx.muted {
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
+.summary-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
+
+.summary-card-combined {
+  background: #06080c;
+  border-color: #243044;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.summary-card-combined .combined-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.summary-rows-stack .row-combined {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.summary-rows-stack .row-combined .label {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.summary-rows-stack .row-combined-total {
+  margin-top: 0.35rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.summary-rows-stack .row-combined-total .muted {
+  font-size: 0.82rem;
+}
+
+.summary-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summary-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.summary-rows .row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.summary-rows .label {
+  color: var(--text-muted);
+}
+
+.summary-rows .net.positive {
+  color: var(--success);
+}
+
+.summary-rows .net.negative {
+  color: var(--danger);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.computed {
+  display: inline-block;
+  min-width: 4.5rem;
+  padding: 0.35rem 0.25rem;
+  font-size: 0.82rem;
+  color: var(--accent);
+}
+
+input.input.field-expense-display {
+  color: var(--accent);
+}
+
+.input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.category-card {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.category-card:first-of-type {
+  margin-top: 0;
+}
+
+.category-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.category-name {
+  flex: 1;
+  min-width: 180px;
+  max-width: 420px;
+}
+
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin: 0 -0.25rem;
+  padding: 0 0.25rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+/* 資產統計（收入）欄寬：讓特定欄位更緊湊、備註更寬 */
+.income-table {
+  table-layout: fixed;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.4rem 0.35rem;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table th {
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.data-table tbody tr:hover {
+  background: rgba(61, 156, 253, 0.06);
+}
+
+/** 年報酬率數值頂多約四位整數＋小數，欄寬不必與投入資金等欄相同 */
+/** 幣別：下拉需完整顯示「台幣／美元」與原生箭頭，勿被過窄均分裁切 */
+.data-table th.col-currency,
+.data-table td.col-currency {
+  width: 5.75rem;
+  min-width: 5.75rem;
+  max-width: 5.75rem;
+  box-sizing: border-box;
+}
+
+.data-table td.col-currency .field-currency {
+  width: 100%;
+  min-width: 0;
+}
+
+.income-table th.col-income-rate,
+.income-table td.col-income-rate {
+  width: calc(5.1rem + 1ch);
+  max-width: calc(5.1rem + 1ch);
+  box-sizing: border-box;
+}
+
+.income-table th.col-income-rate {
+  white-space: normal;
+  line-height: 1.25;
+}
+
+.income-table td.col-income-rate .field-rate {
+  width: 100%;
+  min-width: 0;
+}
+
+/* 投入資金（第 4 欄）：加寬約 1 個中文字 */
+.income-table th:nth-child(4),
+.income-table td:nth-child(4) {
+  width: calc(8.6rem + 1ch);
+  max-width: calc(8.6rem + 1ch);
+}
+
+/* 每單位分配金額（第 8 欄）稍微縮短 */
+.income-table th:nth-child(8),
+.income-table td:nth-child(8) {
+  width: 6.2rem;
+  max-width: 6.2rem;
+}
+
+/* 備註（第 11 欄）加寬：盡量容納約 16 個中文字 */
+.income-table th:nth-child(11),
+.income-table td:nth-child(11) {
+  width: 18ch;
+  max-width: 28ch;
+}
+
+.income-table td:nth-child(11) .field-notes {
+  width: 100%;
+  min-width: 16ch;
+}
+
+.th-drag-col {
+  width: 2rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.th-drag-col::before {
+  content: "⋮⋮";
+  letter-spacing: -0.08em;
+  opacity: 0.45;
+}
+
+.cell-drag-handle {
+  width: 2rem;
+  padding: 0.35rem 0.25rem !important;
+  text-align: center;
+  vertical-align: middle;
+  cursor: grab;
+  user-select: none;
+  color: var(--text-muted);
+}
+
+.cell-drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-grip {
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+tr.income-row.is-dragging,
+tr.expense-row.is-dragging {
+  opacity: 0.75;
+}
+
+tr.income-row.is-dragging td,
+tr.expense-row.is-dragging td {
+  background: rgba(61, 156, 253, 0.08);
+}
+
+body.is-reordering-rows {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.cell-actions {
+  width: 2.5rem;
+  text-align: center;
+}
+
+.cell-actions-income {
+  width: auto;
+  min-width: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+}
+
+.input {
+  width: 100%;
+  max-width: 100%;
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(61, 156, 253, 0.25);
+}
+
+.input-sm {
+  padding: 0.35rem 0.45rem;
+  font-size: 0.82rem;
+}
+
+/** .input 的 font: inherit 會蓋掉先前的 .mono；與 span.computed.mono 一致改用等寬數字 */
+.input.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #0a1628;
+  border-color: var(--accent);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.btn-secondary {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent-dim);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.btn-danger-outline {
+  background: transparent;
+  color: var(--danger);
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
+.btn-danger-outline:hover {
+  background: rgba(248, 113, 113, 0.12);
+}
+
+.btn-sm {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+}
+
+.btn-icon {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+  background: transparent;
+  color: var(--text-muted);
+  border-color: transparent;
+}
+
+.btn-icon:hover {
+  color: var(--danger);
+  background: rgba(248, 113, 113, 0.1);
+}
+
+/** 覆寫上方 .btn display，否則 HTML hidden 屬性不會把按鈕藏起來 */
+button.btn-fetch-moneydj[hidden] {
+  display: none !important;
+}
+
+.file-label {
+  cursor: pointer;
+}
+
+.footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.footer-note {
+  max-width: 72ch;
+  line-height: 1.45;
+}
+
+.empty-hint {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+}
+
+@media (max-width: 900px) {
+  .income-table .field-notes {
+    min-width: 100px;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ----- FCN sheet (spreadsheet-like) ----- */
+:root {
+  --fcn-cyan: #00d4d4;
+  --fcn-cyan-text: #0a1628;
+  --fcn-grid: #0a0a0a;
+  --fcn-title-bg: #000;
+  --fcn-valuation-bg: #f5e6a8;
+}
+
+.fcn-page {
+  margin-bottom: 1.5rem;
+}
+
+.fcn-wrap.panel {
+  padding: 1rem 1rem 1.25rem;
+  overflow: hidden;
+}
+
+.fcn-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  gap: 0;
+  align-items: stretch;
+  border: 1px solid var(--fcn-grid);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+@media (max-width: 960px) {
+  .fcn-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .fcn-desc {
+    border-left: none;
+    border-top: 1px solid var(--fcn-grid);
+    max-height: none;
+  }
+}
+
+.fcn-main-col {
+  min-width: 0;
+  background: #fff;
+  color: #111;
+}
+
+.fcn-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.75rem;
+  background: var(--fcn-title-bg);
+  border-bottom: 1px solid var(--fcn-grid);
+}
+
+.fcn-title-input {
+  width: 100%;
+  max-width: 12rem;
+  text-align: center;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.fcn-title-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.fcn-title-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.fcn-table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.fcn-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  table-layout: fixed;
+}
+
+.fcn-table th,
+.fcn-table td {
+  border: 1px solid var(--fcn-grid);
+  padding: 0.35rem 0.3rem;
+  text-align: center;
+  vertical-align: middle;
+  word-break: break-word;
+}
+
+.fcn-table thead th {
+  background: var(--fcn-cyan);
+  color: var(--fcn-cyan-text);
+  font-weight: 700;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+.fcn-table tbody th.fcn-side-label {
+  background: #f0fafb;
+  font-weight: 600;
+  color: #0a1628;
+}
+
+.fcn-summary-only-spacer {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.fcn-cell-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.25rem 0.2rem;
+  font: inherit;
+  font-size: inherit;
+  text-align: center;
+  color: #111;
+  background: #fff;
+  border: 1px solid #bbb;
+  border-radius: 2px;
+}
+
+.fcn-cell-input:focus {
+  outline: 2px solid #0a7a7a;
+  outline-offset: 0;
+  border-color: #0a7a7a;
+}
+
+.fcn-rate-input {
+  font-weight: 600;
+}
+
+.fcn-computed {
+  display: block;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  padding: 0.2rem;
+  color: #0a1628;
+}
+
+.fcn-pct-pos {
+  color: #0a6b2e;
+}
+
+.fcn-pct-neg {
+  color: #a30f0f;
+}
+
+.fcn-period-blue {
+  color: #0066cc !important;
+  font-weight: 700;
+}
+
+.fcn-meta-block {
+  border-top: 1px solid var(--fcn-grid);
+  padding: 0.5rem 0.65rem 0.65rem;
+  background: #fafafa;
+}
+
+.fcn-valuation-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.fcn-valuation-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.5rem;
+  padding: 0.25rem 0.5rem;
+  font-weight: 700;
+  font-size: 0.82rem;
+  background: var(--fcn-valuation-bg);
+  border: 1px solid var(--fcn-grid);
+}
+
+.fcn-date-input {
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0.25rem 0.45rem;
+  border: 1px solid var(--fcn-grid);
+  border-radius: 2px;
+}
+
+.fcn-formula-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.fcn-formula-table th,
+.fcn-formula-table td {
+  border: 1px solid var(--fcn-grid);
+  padding: 0.3rem 0.45rem;
+  text-align: left;
+}
+
+.fcn-formula-table th {
+  width: 6.5rem;
+  background: var(--fcn-cyan);
+  color: var(--fcn-cyan-text);
+  font-weight: 700;
+}
+
+.fcn-toolbar {
+  margin: 0.65rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.fcn-desc {
+  margin: 0;
+  padding: 0.75rem 0.85rem 1rem;
+  background: #f7f9fc;
+  border-left: 1px solid var(--fcn-grid);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #1a1a1a;
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+.fcn-desc-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0a1628;
+}
+
+.fcn-desc-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.fcn-desc-list li {
+  margin-bottom: 0.45rem;
+}
+
+.fcn-desc-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.76rem;
+  color: #555;
+}
+
+.fcn-page .btn {
+  /* keep buttons readable on light FCN area */
+  border-radius: 6px;
+}
+
+.header-actions a.btn {
+  text-decoration: none;
+}
+
+.fcn-annual-head {
+  vertical-align: middle;
+}
+
+.fcn-rate-head-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+}
+
+.fcn-rate-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.fcn-rate-wrap .fcn-rate-input {
+  width: 4.5rem;
+  min-width: 0;
+}
+
+.fcn-rate-suffix {
+  font-weight: 800;
+  color: var(--fcn-cyan-text);
+  font-size: 0.95rem;
+}
+
+.fcn-formula-editable {
+  font-size: 0.78rem;
+}
+
+.fcn-pct-input {
+  width: 3.25rem;
+  min-width: 0;
+  margin: 0 0.15rem;
+  padding: 0.2rem 0.25rem;
+  font: inherit;
+  font-size: inherit;
+  text-align: center;
+  color: #111;
+  background: #fff;
+  border: 1px solid #bbb;
+  border-radius: 2px;
+}
+
+.fcn-pct-input:focus {
+  outline: 2px solid #0a7a7a;
+  outline-offset: 0;
+}
+
+.fcn-quote-cell {
+  text-align: center;
+  vertical-align: middle;
+  padding: 0.35rem 0.25rem !important;
+}
+
+.fcn-current-price {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #0a1628;
+}
+
+.fcn-combo-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.fcn-combo-bar .fcn-combo-label {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.fcn-combo-select {
+  min-width: 10rem;
+  max-width: 20rem;
+}
+
+.fcn-valuation-section {
+  margin-bottom: 0.65rem;
+}
+
+.fcn-valuation-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.fcn-valuation-heading .fcn-valuation-label {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.fcn-valuation-single {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.fcn-valuation-single .fcn-date-input {
+  width: 10.5rem;
+  max-width: 100%;
+  font-size: 0.88rem;
+  padding: 0.25rem 0.45rem;
+}
+
+.fcn-ko-after-valuation {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #0a5c2e;
+  text-align: right;
+}
+
+.fcn-final-val-date {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #0a1628;
+}
+
+.fcn-final-val-outcome {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #0a5c2e;
+  text-align: right;
+}
+
+.fcn-final-val-outcome:empty {
+  display: none;
+}
+
+.fcn-final-valuation-section {
+  margin-top: 0.35rem;
+}
+
+.fcn-valuation-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem 0.45rem;
+  max-width: 100%;
+}
+
+@media (max-width: 720px) {
+  .fcn-valuation-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.fcn-val-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.fcn-val-idx {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #444;
+  text-align: center;
+}
+
+.fcn-val-cell .fcn-date-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.15rem;
+}
+
+/* ----- KI 緩衝距離顏色分級（當前市值格） ----- */
+.fcn-quote-cell.fcn-ki-buffer-safe {
+  background: #e1f6ea;
+}
+
+.fcn-quote-cell.fcn-ki-buffer-caution {
+  background: #fdf3c8;
+}
+
+.fcn-quote-cell.fcn-ki-buffer-warning {
+  background: #fbe0bd;
+}
+
+.fcn-quote-cell.fcn-ki-buffer-danger {
+  background: #fbdada;
+}
+
+.fcn-quote-cell.fcn-ki-buffer-danger .fcn-current-price {
+  color: #a30f0f;
+  font-weight: 700;
+}
+
+/* ----- 所有組合總覽 ----- */
+.fcn-overview {
+  margin-bottom: 1.25rem;
+}
+
+.fcn-overview-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.fcn-overview-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.fcn-overview-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.fcn-overview-status {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  min-height: 1.1em;
+}
+
+.fcn-overview-table-wrap {
+  overflow-x: auto;
+}
+
+.fcn-overview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.fcn-overview-table th,
+.fcn-overview-table td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.fcn-overview-table th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.fcn-overview-row {
+  cursor: pointer;
+}
+
+.fcn-overview-row:hover {
+  background: var(--surface-hover);
+}
+
+.fcn-overview-row.is-active {
+  background: rgba(61, 156, 253, 0.12);
+}
+
+.fcn-overview-row.is-active .fcn-overview-title {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.fcn-status-badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fcn-status-pending {
+  background: rgba(139, 154, 173, 0.18);
+  color: var(--text-muted);
+}
+
+.fcn-status-tracking {
+  background: rgba(61, 156, 253, 0.16);
+  color: var(--accent);
+}
+
+.fcn-status-warning {
+  background: rgba(251, 191, 36, 0.18);
+  color: #f5b83d;
+}
+
+.fcn-status-ko,
+.fcn-status-matured {
+  background: rgba(52, 211, 153, 0.18);
+  color: var(--success);
+}
+
+.fcn-status-ki {
+  background: rgba(248, 113, 113, 0.18);
+  color: var(--danger);
+}
+
+.fcn-overview-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 720px) {
+  .fcn-overview-table th,
+  .fcn-overview-table td {
+    white-space: normal;
+  }
+}
+

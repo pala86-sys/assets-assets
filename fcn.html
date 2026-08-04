@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FCN 試算</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="app fcn-app-root">
+    <header class="header">
+      <div class="header-inner">
+        <h1>FCN 試算</h1>
+        <p class="subtitle">當前市值透過 Yahoo Finance 公開資料經第三方讀取服務取得（僅供參考，非即時撮合價）。若比價日已過，開啟或重新抓取時會另以日線收盤比對 KO（假日無交易則取該日之前最近一根；K 線時區與交易所可能與本地曆日差一日）。台股可加後綴 <strong>.TW</strong>（例：2330.TW）。</p>
+        <div class="header-actions">
+          <a class="btn btn-ghost" href="index.html">返回資產統計</a>
+          <button type="button" class="btn btn-ghost" id="fcn-btn-export">匯出 JSON</button>
+          <label class="btn btn-ghost file-label">
+            匯入 JSON
+            <input type="file" id="fcn-input-import" accept="application/json,.json" hidden />
+          </label>
+          <button type="button" class="btn btn-secondary" id="fcn-btn-fetch-all">抓取全部即時報價</button>
+          <button type="button" class="btn btn-danger-outline" id="fcn-btn-reset">清空 FCN 資料</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main fcn-page" id="panel-fcn" data-thousands-root>
+      <section class="fcn-overview panel" aria-labelledby="fcn-overview-heading">
+        <div class="fcn-overview-head">
+          <h2 id="fcn-overview-heading">所有組合總覽</h2>
+          <div class="fcn-overview-actions">
+            <span id="fcn-overview-status" class="fcn-overview-status mono" role="status" aria-live="polite"></span>
+            <button type="button" class="btn btn-sm btn-secondary" id="fcn-overview-refresh">重新整理全部組合</button>
+          </div>
+        </div>
+        <div class="fcn-overview-table-wrap">
+          <table class="fcn-overview-table" aria-describedby="fcn-overview-heading">
+            <thead>
+              <tr>
+                <th scope="col">商品名稱</th>
+                <th scope="col">投入資金</th>
+                <th scope="col">年利率(%)</th>
+                <th scope="col">狀態</th>
+                <th scope="col">下次比價日</th>
+                <th scope="col">距到期</th>
+              </tr>
+            </thead>
+            <tbody id="fcn-overview-rows"></tbody>
+          </table>
+        </div>
+        <p class="fcn-overview-hint">點列可切換到該組合的詳細試算表；開啟本頁時會自動依序更新所有組合的最新報價與 KO／KI 狀態。</p>
+      </section>
+
+      <section class="fcn-wrap panel" aria-labelledby="fcn-heading">
+        <h2 id="fcn-heading" class="visually-hidden">FCN 固定票息債券試算</h2>
+        <div class="fcn-combo-bar" role="toolbar" aria-label="FCN 組合">
+          <label class="fcn-combo-label" for="fcn-combo-select">FCN 組合</label>
+          <select id="fcn-combo-select" class="input input-sm fcn-combo-select" aria-label="選擇 FCN 組合"></select>
+          <button type="button" class="btn btn-sm btn-primary" id="fcn-add-combo">新增組合</button>
+          <button type="button" class="btn btn-sm btn-danger-outline" id="fcn-del-combo">刪除目前組合</button>
+        </div>
+        <div class="fcn-layout">
+          <div class="fcn-main-col">
+            <div class="fcn-title-bar">
+              <label class="visually-hidden" for="fcn-sheet-title">商品／試算表名稱</label>
+              <input type="text" id="fcn-sheet-title" class="fcn-title-input" maxlength="32" autocomplete="off" placeholder="請命名" />
+            </div>
+            <div class="fcn-table-scroll">
+              <table class="fcn-table" aria-describedby="fcn-heading">
+                <thead>
+                  <tr>
+                    <th scope="col">股票名稱</th>
+                    <th scope="col">期初價格</th>
+                    <th scope="col">執行價</th>
+                    <th scope="col">提前出場價 KO</th>
+                    <th scope="col">觸碰價 KI</th>
+                    <th scope="col">當前市值</th>
+                    <th scope="col">漲跌幅</th>
+                    <th scope="col" class="fcn-summary-label">年利率</th>
+                    <th scope="col" class="fcn-summary-value fcn-annual-head">
+                      <div class="fcn-rate-head-inner">
+                        <label class="visually-hidden" for="fcn-annual-rate">年利率（數值，單位為百分比％）</label>
+                        <span class="fcn-rate-wrap">
+                          <input type="text" id="fcn-annual-rate" class="fcn-cell-input fcn-rate-input mono input-use-thousands" inputmode="decimal" autocomplete="off" />
+                          <span class="fcn-rate-suffix" aria-hidden="true">%</span>
+                        </span>
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="fcn-stock-rows"></tbody>
+              </table>
+            </div>
+            <div class="fcn-meta-block">
+              <div class="fcn-valuation-section">
+                <div class="fcn-valuation-heading">
+                  <label class="fcn-valuation-label" for="fcn-first-val-date">初次比價日</label>
+                  <div id="fcn-valuation-grid" class="fcn-valuation-single" role="group" aria-label="初次比價日"></div>
+                  <span id="fcn-ko-after-valuation" class="fcn-ko-after-valuation mono" role="status" aria-live="polite"></span>
+                </div>
+              </div>
+              <div class="fcn-valuation-section fcn-final-valuation-section">
+                <div class="fcn-valuation-heading">
+                  <span class="fcn-valuation-label">最終比價日</span>
+                  <span id="fcn-final-val-date" class="fcn-final-val-date mono">—</span>
+                  <span id="fcn-final-val-outcome" class="fcn-final-val-outcome mono" role="status" aria-live="polite"></span>
+                </div>
+              </div>
+              <table class="fcn-formula-table" aria-label="價格倍數（可自訂）">
+                <tbody>
+                  <tr>
+                    <th scope="row">提前出場價 KO</th>
+                    <td class="fcn-formula-editable">
+                      期初價格 ×
+                      <input type="text" id="fcn-pct-ko" class="fcn-pct-input mono input-use-thousands" inputmode="decimal" maxlength="8" autocomplete="off" aria-label="提前出場價倍數百分比" />
+                      %
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">觸碰價 KI</th>
+                    <td class="fcn-formula-editable">
+                      期初價格 ×
+                      <input type="text" id="fcn-pct-ki" class="fcn-pct-input mono input-use-thousands" inputmode="decimal" maxlength="8" autocomplete="off" aria-label="觸碰價倍數百分比" />
+                      %
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">執行價</th>
+                    <td class="fcn-formula-editable">
+                      期初價格 ×
+                      <input type="text" id="fcn-pct-strike" class="fcn-pct-input mono input-use-thousands" inputmode="decimal" maxlength="8" autocomplete="off" aria-label="執行價倍數百分比" />
+                      %
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="fcn-toolbar">
+              <button type="button" class="btn btn-sm btn-secondary" id="fcn-add-stock">新增股票列</button>
+              <button type="button" class="btn btn-sm btn-danger-outline" id="fcn-remove-last-stock">刪除最後一列</button>
+            </p>
+          </div>
+          <aside class="fcn-desc" aria-label="條款說明">
+            <h3 class="fcn-desc-title">說明</h3>
+            <ul class="fcn-desc-list">
+              <li>領息最多 <span id="fcn-desc-period">12</span> 個月（實際以契約為準；月數以上方表格「期間（月）」為準）。</li>
+              <li><strong>KO（提前出場）</strong>：自初次比價日起每日比價，若全部標的曾同時高於各別期初價之 KO 倍數，則提前出場；達 KO 之標的代號顯示於「初次比價日」右側摘要（倍數以上表「提前出場價 KO」為準，目前為 <span id="fcn-desc-ko-pct">100</span>%）。</li>
+              <li><strong>KI（觸碰）— 到期比價日</strong>：若有任一標的曾低於觸碰價（KI），則視觸發情形處理本金；若僅一檔觸發，本金依該標的之執行價轉為股票；若多檔觸發，以跌幅最大者轉換；若均未觸發，返還 100% 本金。「最終比價日」到期後，試算列右側顯示拿回本金或換股股數（投入金額 ÷ 執行價）。</li>
+              <li><strong>利息入帳日</strong>：原則為比價日後第 5 個工作日（不含例假日，實際以銀行／發行機構公告為準）。</li>
+              <li><strong>當前市值顏色</strong>：依「目前股價距觸碰價（KI）之緩衝空間」分級提示——綠色（緩衝 ≥15 個百分點，安全）、黃色（10–15，留意）、橘色（5–10，警戒）、紅色（&lt;5 或曾觸碰過，危險／已鎖定）。滑鼠移到色塊上可看到精確緩衝值。</li>
+            </ul>
+            <p class="fcn-desc-note">本頁為試算與紀錄用；報價與條款以產品說明書、發行機構及實際成交為準。</p>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>FCN 資料儲存在本機（鍵名 <span class="mono">fcn-sheet-v1</span>），可儲存多組合。與「資產統計」分開；舊版若曾將 FCN 存在資產 JSON 內，首次開啟本頁會嘗試自動遷移。</span>
+    </footer>
+  </div>
+
+  <script src="common.js"></script>
+  <script src="fcn-app.js"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>資產統計</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+TC:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-inner">
+        <h1>資產統計</h1>
+        <div class="subtitle subtitle-guide">
+          <p class="subtitle-heading">收入</p>
+          <p><strong>基金</strong>：名稱含「基金」或已設為基金，可按 ↻ 更新 MoneyDJ 淨值與每單位分配；Shift+點擊可修改連結。</p>
+          <p><strong>年金</strong>：名稱含「年金」時，以基金方式試算；↻ 更新國泰淨值與撥回資料（預設 ACT048），Shift+點擊可修改連結。</p>
+          <p><strong>報酬率</strong>：基金／年金 = 年收入 ÷ 投入資金。</p>
+          <p><strong>FCN</strong>：類別含「投資」，細項含 FCN 組合名稱（如 GG53）時，自動帶入投入資金與年報酬率。</p>
+          <p><strong>排序</strong>：拖曳列首 ⠿。</p>
+          <p class="subtitle-heading">支出</p>
+          <p>類別含「保險」或「稅」→ 填 年支出。</p>
+          <p>其他類別 → 填 月支出。</p>
+          <p>彙總會自動換算月支出並與收入比較。</p>
+        </div>
+        <div class="header-actions">
+          <a class="btn btn-ghost" href="fcn.html">FCN 試算</a>
+          <button type="button" class="btn btn-ghost" id="btn-export">匯出 JSON</button>
+          <label class="btn btn-ghost file-label">
+            匯入 JSON
+            <input type="file" id="input-import" accept="application/json,.json" hidden />
+          </label>
+          <button type="button" class="btn btn-danger-outline" id="btn-reset">清空資料</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="panel summary-panel" aria-labelledby="summary-heading">
+        <h2 id="summary-heading">依幣別彙總</h2>
+        <div class="summary-fx-bar">
+          <div class="summary-fx-input-row">
+            <label class="fx-label" for="fx-usd-twd">美元兌台幣（1 美元＝</label>
+            <input type="text" id="fx-usd-twd" class="input input-sm fx-input mono input-use-thousands" autocomplete="off" placeholder="例：32.5" inputmode="decimal" aria-describedby="fx-usd-twd-hint" />
+            <span class="fx-suffix" id="fx-usd-twd-hint">台幣），供美元「每月可用資金」換算約當台幣</span>
+          </div>
+          <div class="summary-fx-actions">
+            <button type="button" class="btn btn-sm btn-secondary" id="btn-fetch-hsbc-fx">載入滙豐（台灣）即期牌價</button>
+            <span class="fx-fetch-status mono" id="fx-fetch-status" role="status" aria-live="polite"></span>
+          </div>
+          <p class="fx-fetch-disclaimer">
+            透過公開讀取服務載入<strong>官網</strong>
+            <a href="https://www.hsbc.com.tw/currency-rates/" target="_blank" rel="noopener noreferrer">外匯利率頁</a>
+            ，掛勾美元<strong>電匯即期</strong>銀行買入／賣出之<strong>中價（僅供參考）</strong>；實際換匯請以交易時牌價為準。
+          </p>
+        </div>
+        <div class="summary-grid" id="summary-grid"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="income-heading">
+        <div class="panel-head">
+          <h2 id="income-heading">收入</h2>
+          <button type="button" class="btn btn-primary" id="btn-add-income-category">新增收入類別</button>
+        </div>
+        <div id="income-categories"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="expense-heading">
+        <div class="panel-head">
+          <h2 id="expense-heading">支出</h2>
+          <button type="button" class="btn btn-primary" id="btn-add-expense-category">新增支出類別</button>
+        </div>
+        <div id="expense-categories"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>資料儲存在本機瀏覽器（localStorage）。建議定期「匯出 JSON」備份。</span>
+      <span class="footer-note">基金試算：月收入 = 每單位分配金額 × 投入單位（假設為<strong>每月</strong>配息）；若實際為年配或其他頻率，請自行換算後填入。</span>
+    </footer>
+  </div>
+
+  <template id="tpl-income-category">
+    <article class="category-card" data-kind="income">
+      <div class="category-toolbar">
+        <input type="text" class="input category-name" placeholder="類別名稱（例：股票、基金）" aria-label="收入類別名稱" />
+        <div class="toolbar-actions">
+          <button type="button" class="btn btn-sm btn-secondary btn-add-income-item">新增細項</button>
+          <button type="button" class="btn btn-sm btn-danger-outline btn-remove-category">刪除類別</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table income-table">
+          <thead>
+            <tr>
+              <th class="th-drag-col" scope="col" aria-label="排序"></th>
+              <th>細項名稱</th>
+              <th class="col-currency">幣別</th>
+              <th>投入資金</th>
+              <th class="col-income-rate">年報酬率 (%)</th>
+              <th>淨值</th>
+              <th>投入單位</th>
+              <th>每單位分配金額</th>
+              <th>年收入（試算）</th>
+              <th>月收入（試算）</th>
+              <th>備註</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </article>
+  </template>
+
+  <template id="tpl-income-row">
+    <tr class="income-row">
+      <td class="cell-drag-handle" title="按住拖曳以調整此列順序">
+        <span class="drag-grip" aria-hidden="true">⠿</span>
+      </td>
+      <td>
+        <input type="hidden" class="field-moneydj-url" value="" />
+        <input type="hidden" class="field-moneydj-div-url" value="" />
+        <input type="text" class="input input-sm field-name" placeholder="細項名稱" />
+      </td>
+      <td class="col-currency">
+        <select class="input input-sm field-currency" aria-label="幣別">
+          <option value="TWD">台幣</option>
+          <option value="USD">美元</option>
+        </select>
+      </td>
+      <td><input type="text" class="input input-sm field-invested mono input-use-thousands" inputmode="decimal" autocomplete="off" placeholder="0" /></td>
+      <td class="col-income-rate"><input type="text" class="input input-sm field-rate mono input-use-thousands" inputmode="decimal" autocomplete="off" placeholder="0" /></td>
+      <td><input type="text" class="input input-sm field-net mono input-use-thousands" inputmode="decimal" autocomplete="off" placeholder="0" /></td>
+      <td><input type="text" class="input input-sm field-units mono input-use-thousands" inputmode="decimal" autocomplete="off" placeholder="0" /></td>
+      <td><input type="text" class="input input-sm field-dist mono input-use-thousands" inputmode="decimal" autocomplete="off" placeholder="0" /></td>
+      <td><span class="computed mono field-computed-annual">—</span></td>
+      <td><span class="computed mono field-computed-monthly">—</span></td>
+      <td><input type="text" class="input input-sm field-notes" placeholder="備註" /></td>
+      <td class="cell-actions cell-actions-income">
+        <button type="button" class="btn btn-icon btn-fetch-moneydj" title="自 MoneyDJ 更新淨值與每單位分配。Shift+點擊可變更淨值／配息連結">↻</button>
+        <button type="button" class="btn btn-icon btn-remove-row" title="刪除此細項">×</button>
+      </td>
+    </tr>
+  </template>
+
+  <template id="tpl-expense-category">
+    <article class="category-card" data-kind="expense">
+      <div class="category-toolbar">
+        <input type="text" class="input category-name" placeholder="類別名稱（例：生活、保險、所得稅）" aria-label="支出類別名稱" />
+        <div class="toolbar-actions">
+          <button type="button" class="btn btn-sm btn-secondary btn-add-expense-item">新增細項</button>
+          <button type="button" class="btn btn-sm btn-danger-outline btn-remove-category">刪除類別</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table expense-table">
+          <thead>
+            <tr>
+              <th class="th-drag-col" scope="col" aria-label="排序"></th>
+              <th>細項名稱</th>
+              <th class="col-currency">幣別</th>
+              <th>月支出（試算）</th>
+              <th>年支出（試算）</th>
+              <th>備註</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </article>
+  </template>
+
+  <template id="tpl-expense-row">
+    <tr class="expense-row">
+      <td class="cell-drag-handle" title="按住拖曳以調整此列順序">
+        <span class="drag-grip" aria-hidden="true">⠿</span>
+      </td>
+      <td><input type="text" class="input input-sm field-name" placeholder="細項名稱" /></td>
+      <td class="col-currency">
+        <select class="input input-sm field-currency">
+          <option value="TWD">台幣</option>
+          <option value="USD">美元</option>
+        </select>
+      </td>
+      <td><input type="text" class="input input-sm field-monthly mono input-use-thousands field-expense-display" inputmode="decimal" autocomplete="off" placeholder="0" title="類別名不含保險／稅時填月支出（試算）" /></td>
+      <td><input type="text" class="input input-sm field-annual mono input-use-thousands field-expense-display" inputmode="decimal" autocomplete="off" placeholder="0" title="類別名含保險或稅時填年支出（試算）" /></td>
+      <td><input type="text" class="input input-sm field-notes" placeholder="備註" /></td>
+      <td class="cell-actions"><button type="button" class="btn btn-icon btn-remove-row" title="刪除此細項">×</button></td>
+    </tr>
+  </template>
+
+  <script src="common.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
