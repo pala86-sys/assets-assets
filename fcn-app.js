@@ -1004,11 +1004,6 @@
     return cur >= init * koFrac;
   }
 
-  /** 實務：比價開始後若某日曾達 KO，之後不因跌價而失效 */
-  function stockKoEffectiveMet(s, koFrac) {
-    return !!s.koEverMet || stockMeetsEarlyExitKo(s, koFrac);
-  }
-
   /** 兩個 yyyy-mm-dd 字串相差天數（toYmd − fromYmd） */
   function daysBetweenYmd(fromYmd, toYmd) {
     const f = normalizeFcnDateStr(fromYmd);
@@ -1147,11 +1142,15 @@
     return changed;
   }
 
-  /** 依 KO 達標紀錄：列出代號，或全部達標時「已提前出場」 */
-  function earlyExitHintText(combo, koFrac) {
+  /**
+   * 依「已收盤確認」之 KO 達標紀錄：列出代號，或全部達標時「已提前出場」。
+   * 僅採計 s.koEverMet（美股收盤確認後才會鎖定，見 updateKoEverMetFromDailyCheck），
+   * 不採計盤中即時價，避免開盤中價格波動就顯示某標的「已達標」。
+   */
+  function earlyExitHintText(combo) {
     const rows = constituentStocksForKo(combo);
     if (rows.length === 0) return "";
-    const met = rows.filter((s) => stockKoEffectiveMet(s, koFrac));
+    const met = rows.filter((s) => !!s.koEverMet);
     if (met.length === 0) return "";
     if (met.length === rows.length) return "已提前出場";
     return met.map((s) => String(s.symbol).trim().toUpperCase()).join("、");
@@ -1177,8 +1176,7 @@
       el.removeAttribute("title");
       return;
     }
-    const koFrac = koFractionFromDom(combo);
-    const hint = earlyExitHintText(combo, koFrac);
+    const hint = earlyExitHintText(combo);
     const koExit = comboKoExitDate(combo);
     if (koExit) {
       const symbols = constituentStocksForKo(combo)
