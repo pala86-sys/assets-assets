@@ -527,6 +527,7 @@
     const endYmd = finalYmd <= today ? finalYmd : today;
     const kiFrac = kiFractionFromDom(combo);
     const rows = constituentStocksForKo(combo);
+    const closeCutoffYmd = usConfirmedCloseCutoffYmd();
     let changed = false;
     for (const s of rows) {
       if (s.kiEverMet) continue;
@@ -542,6 +543,7 @@
       }
       for (const b of bars) {
         if (b.ymd > finalYmd) continue;
+        if (b.ymd > closeCutoffYmd) continue;
         if (b.close <= init * kiFrac) {
           s.kiEverMet = true;
           if (!s.kiMetDate) s.kiMetDate = b.ymd;
@@ -709,6 +711,7 @@
     const endYmd = todayYmdLocal();
     const koFrac = koFractionFromDom(combo);
     const rows = constituentStocksForKo(combo);
+    const closeCutoffYmd = usConfirmedCloseCutoffYmd();
     let changed = false;
     for (const s of rows) {
       if (s.koEverMet) continue;
@@ -723,6 +726,7 @@
         await new Promise((r) => setTimeout(r, 400));
       }
       for (const b of bars) {
+        if (b.ymd > closeCutoffYmd) continue;
         if (b.close >= init * koFrac) {
           s.koEverMet = true;
           if (!s.koMetDate) s.koMetDate = b.ymd;
@@ -919,6 +923,42 @@
     return s <= todayYmdLocal();
   }
 
+  /** 美東目前日期（yyyy-mm-dd）與時分，供判斷當日美股是否已收盤 */
+  function nowUsEasternParts() {
+    const fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/New_York",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    const parts = fmt.formatToParts(new Date());
+    const get = (t) => parts.find((p) => p.type === t)?.value || "";
+    return {
+      ymd: `${get("year")}-${get("month")}-${get("day")}`,
+      minutesOfDay: parseInt(get("hour"), 10) * 60 + parseInt(get("minute"), 10),
+    };
+  }
+
+  /**
+   * 美股當日收盤已確定的最後日期（yyyy-mm-dd）：
+   * 美東時間 16:30 前（含收盤後資料尚未穩定的緩衝時間），視為當日尚未收盤確定，只採計前一曆日以前的資料。
+   */
+  function usConfirmedCloseCutoffYmd() {
+    const { ymd, minutesOfDay } = nowUsEasternParts();
+    const CLOSE_CONFIRMED_AFTER_MINUTES = 16 * 60 + 30;
+    if (minutesOfDay >= CLOSE_CONFIRMED_AFTER_MINUTES) return ymd;
+    const [y, m, d] = ymd.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    dt.setUTCDate(dt.getUTCDate() - 1);
+    const yy = dt.getUTCFullYear();
+    const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(dt.getUTCDate()).padStart(2, "0");
+    return `${yy}-${mm}-${dd}`;
+  }
+
   function koFractionFromDom(combo) {
     const pctFrac = (inp, fb) => {
       const v = inp ? parseNum(normalizeNumericInputString(inp.value)) : 0;
@@ -968,10 +1008,23 @@
     return rows.every((s) => !!s.koEverMet);
   }
 
+  /** 排定比價日序列中，取「≥ ymd」的第一個比價日；若已無更晚的排定比價日則回傳原始 ymd */
+  function nextScheduledValuationOnOrAfter(combo, ymd) {
+    const target = normalizeFcnDateStr(ymd);
+    if (!target) return target;
+    const slotCount = getValuationSlotCount(combo);
+    const dates = buildValuationDatesFromFirst(firstValuationYmd(combo), slotCount).slice(0, slotCount);
+    for (const d of dates) {
+      const nd = normalizeFcnDateStr(d);
+      if (nd && nd >= target) return nd;
+    }
+    return target;
+  }
+
   /**
-   * 提前出場（KO）估計日：取全部標的「各自」首次達標日期中最晚的一天。
-   * 注意：目前 KO 判定為各標的獨立追蹤是否「曾經」達標，並未比對是否為「同一天」收盤同時達標，
-   * 因此此日期為估計值，可能早於／晚於嚴格條件下的實際出場日。
+   * 提前出場（KO）日：全部標的各自達標後，對應到「下一個排定比價日」（KO 僅在排定比價日認定出場，
+   * 而非任何一個收盤價恰好達標的交易日）。取各標的獨立達標日中最晚的一天，再對齊到排定比價日序列。
+   * 注意：KO 仍為各標的獨立追蹤是否「曾經」達標，並未比對是否為「同一天」收盤同時達標，故此日期為估計值。
    */
   function comboKoExitDate(combo) {
     if (!comboAllKoMet(combo)) return "";
@@ -981,7 +1034,7 @@
       const d = normalizeFcnDateStr(s.koMetDate) || todayYmdLocal();
       if (!latest || d > latest) latest = d;
     }
-    return latest;
+    return nextScheduledValuationOnOrAfter(combo, latest);
   }
 
   /** 是否有任一列入計算之標的曾觸碰 KI */
@@ -1065,9 +1118,13 @@
     return "fcn-ki-buffer-safe";
   }
 
-  /** 在初次比價日已過後，以即時價補充當日 KO 達標判定（歷史逐日比對見 backfillKoEverMetFromDailyClosesSinceFirstValuation） */
+  /**
+   * 在初次比價日已過後，以即時價補充當日 KO 達標判定（歷史逐日比對見 backfillKoEverMetFromDailyClosesSinceFirstValuation）。
+   * 僅在美股當日收盤已確定（美東 16:30 後）才會依即時價鎖定達標，避免盤中價格波動就誤判為已出場。
+   */
   function updateKoEverMetFromDailyCheck(combo) {
     if (!hasAnyValuationDone()) return false;
+    if (nowUsEasternParts().minutesOfDay < 16 * 60 + 30) return false;
     const koFrac = koFractionFromDom(combo);
     let changed = false;
     for (const s of combo.stocks) {
