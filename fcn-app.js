@@ -1008,23 +1008,10 @@
     return rows.every((s) => !!s.koEverMet);
   }
 
-  /** 排定比價日序列中，取「≥ ymd」的第一個比價日；若已無更晚的排定比價日則回傳原始 ymd */
-  function nextScheduledValuationOnOrAfter(combo, ymd) {
-    const target = normalizeFcnDateStr(ymd);
-    if (!target) return target;
-    const slotCount = getValuationSlotCount(combo);
-    const dates = buildValuationDatesFromFirst(firstValuationYmd(combo), slotCount).slice(0, slotCount);
-    for (const d of dates) {
-      const nd = normalizeFcnDateStr(d);
-      if (nd && nd >= target) return nd;
-    }
-    return target;
-  }
-
   /**
-   * 提前出場（KO）日：全部標的各自達標後，對應到「下一個排定比價日」（KO 僅在排定比價日認定出場，
-   * 而非任何一個收盤價恰好達標的交易日）。取各標的獨立達標日中最晚的一天，再對齊到排定比價日序列。
-   * 注意：KO 仍為各標的獨立追蹤是否「曾經」達標，並未比對是否為「同一天」收盤同時達標，故此日期為估計值。
+   * 提前出場（KO）日：本商品為每日比價（自初次比價日起，逐日收盤與 KO 門檻比較），
+   * 出場日＝全部標的各自「首次達標日」中最晚的一天（即最後一檔達標、確認全數達標的當天）。
+   * 注意：KO 為各標的獨立追蹤是否「曾經」達標，並未比對是否為「同一天」收盤同時達標，故此日期為估計值。
    */
   function comboKoExitDate(combo) {
     if (!comboAllKoMet(combo)) return "";
@@ -1034,7 +1021,7 @@
       const d = normalizeFcnDateStr(s.koMetDate) || todayYmdLocal();
       if (!latest || d > latest) latest = d;
     }
-    return nextScheduledValuationOnOrAfter(combo, latest);
+    return latest;
   }
 
   /** 是否有任一列入計算之標的曾觸碰 KI */
