@@ -848,14 +848,19 @@
     const rate = formatThousandsNumber(parseNum(combo.annualRatePct));
     const status = comboStatusLabel(combo);
     const isActive = combo.id === state.activeComboId;
+    /** 已提前出場（KO）：契約已提前終止，後續比價／配息／到期日皆無意義，不再顯示 */
+    const alreadyExited = status.cls === "fcn-status-ko";
+    const nextKoCheck = alreadyExited ? "—" : comboNextKoCheckText(combo);
+    const nextValuation = alreadyExited ? "—" : comboNextValuationText(combo);
+    const daysToMaturity = alreadyExited ? "—" : comboDaysToMaturityText(combo);
     return `<tr data-combo-id="${escapeHtmlAttr(combo.id)}" class="fcn-overview-row${isActive ? " is-active" : ""}">
       <td class="fcn-overview-title">${escapeHtmlAttr(label)}</td>
       <td class="mono">${escapeHtmlAttr(invested)}</td>
       <td class="mono">${escapeHtmlAttr(rate)}%</td>
       <td><span class="fcn-status-badge ${status.cls}">${escapeHtmlAttr(status.text)}</span></td>
-      <td class="mono">${escapeHtmlAttr(comboNextKoCheckText(combo))}</td>
-      <td class="mono">${escapeHtmlAttr(comboNextValuationText(combo))}</td>
-      <td class="mono">${escapeHtmlAttr(comboDaysToMaturityText(combo))}</td>
+      <td class="mono">${escapeHtmlAttr(nextKoCheck)}</td>
+      <td class="mono">${escapeHtmlAttr(nextValuation)}</td>
+      <td class="mono">${escapeHtmlAttr(daysToMaturity)}</td>
     </tr>`;
   }
 
