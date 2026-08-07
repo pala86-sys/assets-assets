@@ -1031,13 +1031,17 @@ button.btn-fetch-moneydj[hidden] {
 }
 
 .fcn-ko-after-valuation {
-  flex: 1 1 auto;
+  flex: 1 1 100%;
   min-width: 0;
   font-size: 0.82rem;
   font-weight: 600;
   line-height: 1.35;
   color: #0a5c2e;
-  text-align: right;
+  text-align: left;
+}
+
+.fcn-ko-after-valuation:not(:empty) {
+  margin-top: 0.15rem;
 }
 
 .fcn-final-val-date {

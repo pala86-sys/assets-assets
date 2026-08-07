@@ -1091,7 +1091,8 @@
     const invested = investedCapitalFromDom(combo);
     const periods = Math.max(1, periodsElapsedByYmd(combo, koExit));
     const interestTotal = comboMonthlyInterestAmountFromDom(combo) * periods;
-    const parts = [`已收利息 ${periods} 期共 ${formatFcnMoney(interestTotal)}`];
+    const firstLine = `已收利息 ${periods} 期共 ${formatFcnMoney(interestTotal)}`;
+    const parts = [];
     if (invested > 0) {
       const total = invested + interestTotal;
       const returnPct = (total / invested - 1) * 100;
@@ -1104,7 +1105,7 @@
     } else {
       parts.push("（投入資金未填，無法試算總報酬）");
     }
-    return parts.join("；");
+    return `${firstLine}\n${parts.join("，")}`;
   }
 
   /** 依「目前價格距 KI 觸碰價之緩衝空間」分級，供表格上色提示風險 */
@@ -1183,7 +1184,10 @@
         .map((s) => String(s.symbol).trim().toUpperCase())
         .join("、");
       const outcomeText = comboKoOutcomeText(combo);
-      el.textContent = `已提前出場（${symbols || "全數達標"}）於 ${formatFcnDateSlashDisplay(koExit)}：${outcomeText}`;
+      const outcomeHtml = outcomeText.split("\n").map(escapeHtmlAttr).join("<br>");
+      el.innerHTML = `已提前出場（${escapeHtmlAttr(symbols || "全數達標")}）於 ${escapeHtmlAttr(
+        formatFcnDateSlashDisplay(koExit)
+      )}：${outcomeHtml}`;
       el.setAttribute(
         "title",
         "提前出場總報酬試算：已收利息（依已過比價期數 × 每期利息）＋本金 100% 回收；約當年化為總報酬率換算持有天數之估計值。出場日為各標的分別達標日期中最晚一天之估計，並非嚴格比對「全部標的同一天收盤」達標，僅供參考，實際以入帳為準。"
