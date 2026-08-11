@@ -14,6 +14,9 @@
 
   const FCN_STORAGE_KEY = "fcn-sheet-v1";
   const LEGACY_ASSET_KEY = "asset-stats-v1";
+  const FCN_LAST_EXPORT_KEY = "fcn-last-export-at";
+  const FCN_EXPORT_REMINDER_DAYS = 7;
+  const FCN_COMPACT_PREF_KEY = "fcn-table-compact";
   const FCN_MIN_STOCKS = 1;
   /** 比價日欄位最多可存幾格（與「期間（月）」上限一致） */
   const MAX_VALUATION_STORAGE = 36;
@@ -266,6 +269,8 @@
   const els = {
     panelFcn: document.getElementById("panel-fcn"),
     fcnStockTbody: document.getElementById("fcn-stock-rows"),
+    fcnTableScroll: document.getElementById("fcn-table-scroll"),
+    fcnToggleCompact: document.getElementById("fcn-toggle-compact"),
     fcnSheetTitle: document.getElementById("fcn-sheet-title"),
     fcnAnnualRate: document.getElementById("fcn-annual-rate"),
     fcnAddStock: document.getElementById("fcn-add-stock"),
@@ -847,6 +852,32 @@
     return `已過期（${dateLabel}）`;
   }
 
+  /** 追蹤中組合裡，所有標的距 KI 觸碰價的最小緩衝百分點（尚未觸碰時才有意義） */
+  function comboMinKiBufferPct(combo) {
+    const kiFrac = kiFractionFromDom(combo);
+    if (!(kiFrac > 0)) return null;
+    let min = Infinity;
+    for (const s of combo.stocks || []) {
+      const sym = String(s?.symbol || "").trim();
+      const init = parseNum(s?.initialPrice);
+      if (!sym || !(init > 0)) continue;
+      const cur = parseNum(s?.currentPrice);
+      if (!Number.isFinite(cur) || cur <= 0) continue;
+      const bufferPct = (cur / init) * 100 - kiFrac * 100;
+      if (bufferPct < min) min = bufferPct;
+    }
+    return Number.isFinite(min) ? min : null;
+  }
+
+  /** 依緩衝百分點分級，供總覽表列加上風險提示樣式（門檻與個股 KI 色階一致） */
+  function overviewRiskClassFromBufferPct(bufferPct) {
+    if (bufferPct == null) return "";
+    if (bufferPct < 5) return "fcn-overview-risk-danger";
+    if (bufferPct < 10) return "fcn-overview-risk-warning";
+    if (bufferPct < 15) return "fcn-overview-risk-caution";
+    return "";
+  }
+
   function renderComboOverviewRowHtml(combo) {
     const label = (combo.sheetTitle || "").trim() || "請命名";
     const invested = formatThousandsNumber(parseNum(combo.investedCapital));
@@ -858,11 +889,18 @@
     const nextKoCheck = alreadyExited ? "—" : comboNextKoCheckText(combo);
     const nextValuation = alreadyExited ? "—" : comboNextValuationText(combo);
     const daysToMaturity = alreadyExited ? "—" : comboDaysToMaturityText(combo);
-    return `<tr data-combo-id="${escapeHtmlAttr(combo.id)}" class="fcn-overview-row${isActive ? " is-active" : ""}">
+    const isTracking = status.cls === "fcn-status-tracking" || status.cls === "fcn-status-warning";
+    const bufferPct = isTracking ? comboMinKiBufferPct(combo) : null;
+    const riskClsRaw = overviewRiskClassFromBufferPct(bufferPct);
+    const riskCls = riskClsRaw === "fcn-overview-risk-caution" ? "" : riskClsRaw;
+    const riskBadge = riskCls
+      ? `<span class="fcn-overview-risk-badge ${riskCls}" title="距 KI 觸碰價僅剩約 ${bufferPct.toFixed(1)} 個百分點緩衝">⚠ 緩衝 ${bufferPct.toFixed(1)}%</span>`
+      : "";
+    return `<tr data-combo-id="${escapeHtmlAttr(combo.id)}" class="fcn-overview-row${isActive ? " is-active" : ""}${riskCls ? ` ${riskCls}` : ""}">
       <td class="fcn-overview-title">${escapeHtmlAttr(label)}</td>
       <td class="mono">${escapeHtmlAttr(invested)}</td>
       <td class="mono">${escapeHtmlAttr(rate)}%</td>
-      <td><span class="fcn-status-badge ${status.cls}">${escapeHtmlAttr(status.text)}</span></td>
+      <td><span class="fcn-status-badge ${status.cls}">${escapeHtmlAttr(status.text)}</span>${riskBadge}</td>
       <td class="mono">${escapeHtmlAttr(nextKoCheck)}</td>
       <td class="mono">${escapeHtmlAttr(nextValuation)}</td>
       <td class="mono">${escapeHtmlAttr(daysToMaturity)}</td>
@@ -885,6 +923,20 @@
   }
 
   let overviewRefreshRunning = false;
+  let lastOverviewUpdateAt = null;
+
+  /** 顯示總覽表最後一次完成更新的時間（僅本次瀏覽期間有效，重新整理頁面後歸零） */
+  function renderOverviewUpdatedAt() {
+    const el = document.getElementById("fcn-overview-updated");
+    if (!el) return;
+    if (!lastOverviewUpdateAt) {
+      el.textContent = "";
+      return;
+    }
+    const h = String(lastOverviewUpdateAt.getHours()).padStart(2, "0");
+    const m = String(lastOverviewUpdateAt.getMinutes()).padStart(2, "0");
+    el.textContent = `最後更新 ${h}:${m}`;
+  }
 
   /** 依序（非同時）掃描所有組合並更新報價／KO／KI，逐一完成即重繪總覽，避免同時發太多請求 */
   async function refreshAllCombosOverview() {
@@ -905,6 +957,8 @@
         }
       }
       saveState();
+      lastOverviewUpdateAt = new Date();
+      renderOverviewUpdatedAt();
     } finally {
       if (statusEl) statusEl.textContent = "";
       overviewRefreshRunning = false;
@@ -1633,6 +1687,7 @@
         a.click();
         URL.revokeObjectURL(a.href);
         saveState();
+        localStorage.setItem(FCN_LAST_EXPORT_KEY, String(Date.now()));
       });
     }
 
@@ -1669,8 +1724,49 @@
     }
   }
 
+  /** 精簡欄位模式：收合期初價格／執行價，窄視窗下減少橫向捲動；偏好記在 localStorage，首次造訪則依視窗寬度預設 */
+  function applyFcnCompactPref(isCompact) {
+    if (els.fcnTableScroll) els.fcnTableScroll.classList.toggle("is-compact", isCompact);
+    if (els.fcnToggleCompact) {
+      els.fcnToggleCompact.setAttribute("aria-pressed", isCompact ? "true" : "false");
+      els.fcnToggleCompact.textContent = isCompact ? "顯示完整欄位" : "精簡欄位";
+    }
+  }
+
+  function initFcnCompactToggle() {
+    const stored = localStorage.getItem(FCN_COMPACT_PREF_KEY);
+    const isCompact = stored != null ? stored === "1" : window.innerWidth < 640;
+    applyFcnCompactPref(isCompact);
+    if (els.fcnToggleCompact) {
+      els.fcnToggleCompact.addEventListener("click", () => {
+        const next = !els.fcnTableScroll?.classList.contains("is-compact");
+        applyFcnCompactPref(next);
+        localStorage.setItem(FCN_COMPACT_PREF_KEY, next ? "1" : "0");
+      });
+    }
+  }
+
+  /** 是否有值得備份的資料（至少一個組合有命名或填了股票代號） */
+  function hasMeaningfulFcnData() {
+    return state.combos.some((combo) => {
+      if ((combo.sheetTitle || "").trim()) return true;
+      return (combo.stocks || []).some((s) => (s?.symbol || "").trim());
+    });
+  }
+
+  /** 離開頁面前，若從未匯出或已超過設定天數未匯出，提醒使用者備份 JSON */
+  window.addEventListener("beforeunload", (e) => {
+    if (!hasMeaningfulFcnData()) return;
+    const lastExportAt = Number(localStorage.getItem(FCN_LAST_EXPORT_KEY) || 0);
+    const daysSinceExport = lastExportAt > 0 ? (Date.now() - lastExportAt) / 86400000 : Infinity;
+    if (daysSinceExport < FCN_EXPORT_REMINDER_DAYS) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
+
   bindThousandsInputs(document.querySelector(".fcn-app-root"));
   initEvents();
+  initFcnCompactToggle();
   renderFcnPanel();
   mirrorFcnLookupForAssetPage(state);
   /** 開啟頁面時依序掃描所有組合的最新報價／KO／KI（含目前作用中的組合），供總覽表使用 */

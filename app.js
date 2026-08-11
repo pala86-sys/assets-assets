@@ -17,6 +17,7 @@
     incomeCategories: [],
     expenseCategories: [],
     usdToTwdRate: "",
+    usdToTwdRateUpdatedAt: "",
     fcnLookup: [],
   });
 
@@ -53,6 +54,8 @@
           parsed.usdToTwdRate != null && String(parsed.usdToTwdRate).trim() !== ""
             ? normalizeNumericInputString(String(parsed.usdToTwdRate))
             : "",
+        usdToTwdRateUpdatedAt:
+          typeof parsed.usdToTwdRateUpdatedAt === "string" ? parsed.usdToTwdRateUpdatedAt : "",
         fcnLookup: Array.isArray(parsed.fcnLookup) ? parsed.fcnLookup : [],
       };
     } catch {
@@ -168,6 +171,21 @@
     }
     const n = Number(raw);
     els.fxUsdTwd.value = Number.isFinite(n) ? formatThousandsNumber(n) : "";
+  }
+
+  /** 頁面載入時，若有快取匯率則顯示上次更新時間，讓使用者知道目前數值是否夠新 */
+  function renderCachedFxUpdatedAt() {
+    if (!els.fxFetchStatus) return;
+    const raw = normalizeNumericInputString(state.usdToTwdRate ?? "");
+    if (raw === "" || !state.usdToTwdRateUpdatedAt) return;
+    const d = new Date(state.usdToTwdRateUpdatedAt);
+    if (Number.isNaN(d.getTime())) return;
+    const y = d.getFullYear();
+    const mo = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    els.fxFetchStatus.textContent = `使用快取匯率，更新於 ${y}/${mo}/${day} ${hh}:${mm}`;
   }
 
   function normalizedIncomeKind(it) {
@@ -1701,6 +1719,7 @@
       if (!parsed) throw new Error("parse");
       const rateStr = parsed.mid.toFixed(4);
       state.usdToTwdRate = rateStr;
+      state.usdToTwdRateUpdatedAt = new Date().toISOString();
       if (els.fxUsdTwd) els.fxUsdTwd.value = formatThousandsNumber(Number(rateStr));
       saveState();
       const updRaw = extractHsbcTwUpdateSnippet(text);
@@ -1894,9 +1913,12 @@
             parsed.usdToTwdRate != null && String(parsed.usdToTwdRate).trim() !== ""
               ? normalizeNumericInputString(String(parsed.usdToTwdRate))
               : "",
+          usdToTwdRateUpdatedAt:
+            typeof parsed.usdToTwdRateUpdatedAt === "string" ? parsed.usdToTwdRateUpdatedAt : "",
           fcnLookup: Array.isArray(parsed.fcnLookup) ? parsed.fcnLookup : prevLookup,
         };
         refreshFxUsdTwdInputFromState();
+        renderCachedFxUpdatedAt();
         saveState();
         renderAll();
       } catch {
@@ -1912,6 +1934,7 @@
     state = defaultState();
     localStorage.removeItem(STORAGE_KEY);
     if (els.fxUsdTwd) els.fxUsdTwd.value = "";
+    if (els.fxFetchStatus) els.fxFetchStatus.textContent = "";
     renderAll();
   });
 
@@ -1919,8 +1942,11 @@
 
   if (els.fxUsdTwd) {
     refreshFxUsdTwdInputFromState();
+    renderCachedFxUpdatedAt();
     els.fxUsdTwd.addEventListener("input", () => {
       state.usdToTwdRate = normalizeNumericInputString(els.fxUsdTwd.value);
+      state.usdToTwdRateUpdatedAt = "";
+      if (els.fxFetchStatus) els.fxFetchStatus.textContent = "";
       saveState();
     });
   }

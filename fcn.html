@@ -33,6 +33,7 @@
         <div class="fcn-overview-head">
           <h2 id="fcn-overview-heading">所有組合總覽</h2>
           <div class="fcn-overview-actions">
+            <span id="fcn-overview-updated" class="fcn-overview-updated mono"></span>
             <span id="fcn-overview-status" class="fcn-overview-status mono" role="status" aria-live="polite"></span>
             <button type="button" class="btn btn-sm btn-secondary" id="fcn-overview-refresh">重新整理全部組合</button>
           </div>
@@ -69,8 +70,9 @@
             <div class="fcn-title-bar">
               <label class="visually-hidden" for="fcn-sheet-title">商品／試算表名稱</label>
               <input type="text" id="fcn-sheet-title" class="fcn-title-input" maxlength="32" autocomplete="off" placeholder="請命名" />
+              <button type="button" class="btn btn-sm btn-ghost fcn-toggle-compact-btn" id="fcn-toggle-compact" aria-pressed="false">精簡欄位</button>
             </div>
-            <div class="fcn-table-scroll">
+            <div class="fcn-table-scroll" id="fcn-table-scroll">
               <table class="fcn-table" aria-describedby="fcn-heading">
                 <thead>
                   <tr>

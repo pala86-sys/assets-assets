@@ -542,6 +542,25 @@ body.is-reordering-rows {
   filter: brightness(1.08);
 }
 
+.btn-add-category {
+  padding: 0.6rem 1.1rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(61, 156, 253, 0.28);
+}
+
+.btn-add-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1em;
+  height: 1.1em;
+  border-radius: 999px;
+  background: rgba(10, 22, 40, 0.18);
+  font-weight: 800;
+  line-height: 1;
+}
+
 .btn-secondary {
   background: var(--surface-hover);
   color: var(--text);
@@ -693,10 +712,26 @@ button.btn-fetch-moneydj[hidden] {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
   min-height: 2.5rem;
   padding: 0.35rem 0.75rem;
   background: var(--fcn-title-bg);
   border-bottom: 1px solid var(--fcn-grid);
+  position: relative;
+}
+
+.fcn-toggle-compact-btn {
+  position: absolute;
+  right: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.fcn-toggle-compact-btn[aria-pressed="true"] {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 
 .fcn-title-input {
@@ -762,6 +797,18 @@ button.btn-fetch-moneydj[hidden] {
   padding: 0;
   border: none;
   background: transparent;
+}
+
+/* 精簡欄位模式：手機／窄視窗下收合期初價格、執行價，只留股票名稱、KO、KI、市值、漲跌幅與右側摘要 */
+.fcn-table-scroll.is-compact .fcn-table {
+  min-width: 30rem;
+}
+
+.fcn-table-scroll.is-compact .fcn-table th:nth-child(2),
+.fcn-table-scroll.is-compact .fcn-table td:nth-child(2),
+.fcn-table-scroll.is-compact .fcn-table th:nth-child(3),
+.fcn-table-scroll.is-compact .fcn-table td:nth-child(3) {
+  display: none;
 }
 
 .fcn-cell-input {
@@ -1157,6 +1204,11 @@ button.btn-fetch-moneydj[hidden] {
   min-height: 1.1em;
 }
 
+.fcn-overview-updated {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
 .fcn-overview-table-wrap {
   overflow-x: auto;
 }
@@ -1213,24 +1265,56 @@ button.btn-fetch-moneydj[hidden] {
 }
 
 .fcn-status-tracking {
-  background: rgba(61, 156, 253, 0.16);
-  color: var(--accent);
+  background: rgba(61, 156, 253, 0.24);
+  color: #6db4ff;
+  box-shadow: inset 0 0 0 1px rgba(61, 156, 253, 0.4);
 }
 
 .fcn-status-warning {
-  background: rgba(251, 191, 36, 0.18);
-  color: #f5b83d;
+  background: rgba(251, 191, 36, 0.26);
+  color: #ffcb5c;
+  box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.5);
 }
 
 .fcn-status-ko,
 .fcn-status-matured {
-  background: rgba(52, 211, 153, 0.18);
+  background: rgba(52, 211, 153, 0.2);
   color: var(--success);
 }
 
 .fcn-status-ki {
-  background: rgba(248, 113, 113, 0.18);
+  background: rgba(248, 113, 113, 0.24);
   color: var(--danger);
+  box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.5);
+}
+
+.fcn-overview-risk-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.fcn-overview-risk-badge.fcn-overview-risk-warning {
+  background: rgba(251, 191, 36, 0.2);
+  color: #ffcb5c;
+}
+
+.fcn-overview-risk-badge.fcn-overview-risk-danger {
+  background: rgba(248, 113, 113, 0.22);
+  color: var(--danger);
+}
+
+.fcn-overview-row.fcn-overview-risk-warning {
+  box-shadow: inset 3px 0 0 0 #f5b83d;
+}
+
+.fcn-overview-row.fcn-overview-risk-danger {
+  box-shadow: inset 3px 0 0 0 var(--danger);
 }
 
 .fcn-overview-hint {
