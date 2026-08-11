@@ -873,7 +873,15 @@
   function renderComboOverview() {
     const tbody = document.getElementById("fcn-overview-rows");
     if (!tbody) return;
-    tbody.innerHTML = state.combos.map(renderComboOverviewRowHtml).join("");
+    const sortedCombos = state.combos.slice().sort((a, b) => {
+      const ymdA = firstValuationYmd(a) || "";
+      const ymdB = firstValuationYmd(b) || "";
+      if (!ymdA && !ymdB) return 0;
+      if (!ymdA) return 1;
+      if (!ymdB) return -1;
+      return ymdA < ymdB ? -1 : ymdA > ymdB ? 1 : 0;
+    });
+    tbody.innerHTML = sortedCombos.map(renderComboOverviewRowHtml).join("");
   }
 
   let overviewRefreshRunning = false;
