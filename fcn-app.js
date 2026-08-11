@@ -768,8 +768,8 @@
   function renderComboSelect() {
     const sel = els.comboSelect;
     if (!sel) return;
-    sel.innerHTML = state.combos
-      .map((c, i) => {
+    sel.innerHTML = combosSortedByFirstValuation(state.combos)
+      .map((c) => {
         const label = (c.sheetTitle || "").trim() || "請命名";
         return `<option value="${escapeHtmlAttr(c.id)}">${escapeHtmlAttr(label)}</option>`;
       })
@@ -907,11 +907,9 @@
     </tr>`;
   }
 
-  /** 重繪「所有組合總覽」表格；不觸發任何網路請求，只讀目前已存的資料 */
-  function renderComboOverview() {
-    const tbody = document.getElementById("fcn-overview-rows");
-    if (!tbody) return;
-    const sortedCombos = state.combos.slice().sort((a, b) => {
+  /** 依初次比價日由早到晚排序組合（未設定者排最後）；總覽表與組合下拉選單共用同一順序 */
+  function combosSortedByFirstValuation(combos) {
+    return combos.slice().sort((a, b) => {
       const ymdA = firstValuationYmd(a) || "";
       const ymdB = firstValuationYmd(b) || "";
       if (!ymdA && !ymdB) return 0;
@@ -919,7 +917,13 @@
       if (!ymdB) return -1;
       return ymdA < ymdB ? -1 : ymdA > ymdB ? 1 : 0;
     });
-    tbody.innerHTML = sortedCombos.map(renderComboOverviewRowHtml).join("");
+  }
+
+  /** 重繪「所有組合總覽」表格；不觸發任何網路請求，只讀目前已存的資料 */
+  function renderComboOverview() {
+    const tbody = document.getElementById("fcn-overview-rows");
+    if (!tbody) return;
+    tbody.innerHTML = combosSortedByFirstValuation(state.combos).map(renderComboOverviewRowHtml).join("");
   }
 
   let overviewRefreshRunning = false;
