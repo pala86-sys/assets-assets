@@ -325,6 +325,22 @@ input.input.field-expense-display {
   max-width: 420px;
 }
 
+@media (max-width: 480px) {
+  .category-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .category-name {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .toolbar-actions {
+    justify-content: flex-end;
+  }
+}
+
 .toolbar-actions {
   display: flex;
   flex-wrap: wrap;
