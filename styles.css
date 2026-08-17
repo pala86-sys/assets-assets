@@ -414,6 +414,35 @@ input.input.field-expense-display {
   min-width: 0;
 }
 
+/* 細項名稱（第 2 欄）：table-layout:fixed 下若不給寬度，於窄螢幕會被其他固定欄位擠壓成 0
+   （欄位消失、看起來像與幣別欄重疊），故明訂最小寬度 */
+.income-table th:nth-child(2),
+.income-table td:nth-child(2) {
+  width: 7rem;
+  min-width: 7rem;
+  box-sizing: border-box;
+}
+
+/* 淨值／投入單位（第 6、7 欄）：同上，避免被擠壓成 0 */
+.income-table th:nth-child(6),
+.income-table td:nth-child(6),
+.income-table th:nth-child(7),
+.income-table td:nth-child(7) {
+  width: 5.5rem;
+  min-width: 5.5rem;
+  box-sizing: border-box;
+}
+
+/* 年／月收入試算（第 9、10 欄，僅顯示文字）：同上，避免被擠壓成 0 */
+.income-table th:nth-child(9),
+.income-table td:nth-child(9),
+.income-table th:nth-child(10),
+.income-table td:nth-child(10) {
+  width: 4.5rem;
+  min-width: 4.5rem;
+  box-sizing: border-box;
+}
+
 /* 投入資金（第 4 欄）：加寬約 1 個中文字 */
 .income-table th:nth-child(4),
 .income-table td:nth-child(4) {
