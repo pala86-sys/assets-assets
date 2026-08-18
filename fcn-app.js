@@ -1124,6 +1124,57 @@
     return count;
   }
 
+  /** 兩日期間（不含 fromYmd、含 toYmd）之工作日（週一～週五）天數，供不足一期之利息比例計算 */
+  function workdaysBetweenExclusiveStart(fromYmd, toYmd) {
+    const f = normalizeFcnDateStr(fromYmd);
+    const t = normalizeFcnDateStr(toYmd);
+    if (!f || !t || t <= f) return 0;
+    const [fy, fm, fd] = f.split("-").map(Number);
+    const [ty, tm, td] = t.split("-").map(Number);
+    const end = Date.UTC(ty, tm - 1, td);
+    let cur = Date.UTC(fy, fm - 1, fd);
+    let count = 0;
+    while (cur < end) {
+      cur += 86400000;
+      const day = new Date(cur).getUTCDay();
+      if (day !== 0 && day !== 6) count += 1;
+    }
+    return count;
+  }
+
+  /**
+   * 已收利息期數（可能含小數）：已過完整期數（比價日序列中已過之格數）
+   * ＋不足一期部分（按工作日比例計算）。
+   * 例：發息日 7/26、8/26，若於兩者之間提前出場，則為 1 期＋（7/26～出場日工作天數 ÷ 7/26～8/26工作天數）。
+   */
+  function periodsElapsedWithProrationByYmd(combo, uptoYmd) {
+    const target = normalizeFcnDateStr(uptoYmd);
+    if (!target) return 0;
+    const slotCount = getValuationSlotCount(combo);
+    const dates = buildValuationDatesFromFirst(firstValuationYmd(combo), slotCount)
+      .map(normalizeFcnDateStr)
+      .filter(Boolean);
+    if (!dates.length) return 0;
+    let fullPeriods = 0;
+    for (let i = 0; i < dates.length; i += 1) {
+      if (dates[i] <= target) fullPeriods = i + 1;
+      else break;
+    }
+    const lastFullDate = fullPeriods > 0 ? dates[fullPeriods - 1] : dates[0];
+    if (target <= lastFullDate) return fullPeriods;
+    const nextDate = dates[fullPeriods] || addMonthsToYmd(lastFullDate, 1);
+    const elapsedWorkdays = workdaysBetweenExclusiveStart(lastFullDate, target);
+    const periodWorkdays = workdaysBetweenExclusiveStart(lastFullDate, nextDate);
+    const stubFraction = periodWorkdays > 0 ? Math.min(1, elapsedWorkdays / periodWorkdays) : 0;
+    return fullPeriods + stubFraction;
+  }
+
+  /** 期數顯示：整數不顯示小數，非整數顯示到小數第 2 位 */
+  function formatFcnPeriods(n) {
+    if (!Number.isFinite(n)) return "0";
+    return Number.isInteger(n) ? String(n) : n.toFixed(2);
+  }
+
   function annualRatePctFromDom(combo) {
     const rateEl = els.fcnAnnualRate;
     return rateEl ? parseNum(normalizeNumericInputString(rateEl.value)) : parseNum(combo.annualRatePct);
@@ -1155,9 +1206,9 @@
     const koExit = comboKoExitDate(combo);
     if (!koExit) return "";
     const invested = investedCapitalFromDom(combo);
-    const periods = Math.max(1, periodsElapsedByYmd(combo, koExit));
+    const periods = Math.max(1, periodsElapsedWithProrationByYmd(combo, koExit));
     const interestTotal = comboMonthlyInterestAmountFromDom(combo) * periods;
-    const firstLine = `已收利息 ${periods} 期共 ${formatFcnMoney(interestTotal)}`;
+    const firstLine = `已收利息 ${formatFcnPeriods(periods)} 期共 ${formatFcnMoney(interestTotal)}`;
     const parts = [];
     if (invested > 0) {
       const total = invested + interestTotal;
