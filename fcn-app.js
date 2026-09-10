@@ -90,6 +90,7 @@
       })(),
       annualRatePct: "",
       periodMonths: "12",
+      guaranteedPeriods: "1",
       investedCapital: "",
       koPct: "100",
       kiPct: "65",
@@ -112,6 +113,7 @@
       })(),
       annualRatePct: "16.16",
       periodMonths: "12",
+      guaranteedPeriods: "1",
       investedCapital: "100000",
       koPct: "100",
       kiPct: "65",
@@ -184,6 +186,7 @@
       valuationDates: normalizeValuationDates(raw),
       annualRatePct: stripNumericish(raw.annualRatePct ?? "") || d.annualRatePct,
       periodMonths: stripNumericish(raw.periodMonths ?? "") || d.periodMonths,
+      guaranteedPeriods: stripNumericish(raw.guaranteedPeriods ?? "") || d.guaranteedPeriods,
       investedCapital: stripNumericish(raw.investedCapital ?? "") || d.investedCapital,
       koPct: pctOr(raw.koPct, d.koPct),
       kiPct: pctOr(raw.kiPct, d.kiPct),
@@ -493,6 +496,24 @@
     const slotCount = getValuationSlotCount(combo);
     const dates = buildValuationDatesFromFirst(firstValuationYmd(combo), slotCount);
     return normalizeFcnDateStr(dates[slotCount - 1] ?? "");
+  }
+
+  /**
+   * 保底期數：至少配息幾期。KO 於此期間內不觸發提前出場，且提前出場時利息不少於此期數。
+   * 四捨五入後夾在 1～比價格數之間；保底 1 期＝一般 FCN（初次比價日即第一個比價日）。
+   */
+  function getGuaranteedPeriodCount(combo) {
+    let g = parseNum(String(combo?.guaranteedPeriods ?? "").replace(/,/g, ""));
+    if (!Number.isFinite(g) || g <= 0) g = 1;
+    g = Math.round(g);
+    return Math.min(getValuationSlotCount(combo), Math.max(1, g));
+  }
+
+  /** 保底期最後一個比價日：KO 最早可能提前出場的日期（保底 1 期時即初次比價日） */
+  function guaranteedObsYmd(combo) {
+    const slotCount = getValuationSlotCount(combo);
+    const dates = buildValuationDatesFromFirst(firstValuationYmd(combo), slotCount);
+    return normalizeFcnDateStr(dates[getGuaranteedPeriodCount(combo) - 1] ?? "");
   }
 
   /** DOM 上的百分比輸入框只反映目前作用中的組合；非作用中組合一律改用該組合自己存的百分比，避免混用到別組合的門檻 */
@@ -1102,6 +1123,10 @@
       const d = normalizeFcnDateStr(s.koMetDate) || todayYmdLocal();
       if (!latest || d > latest) latest = d;
     }
+    /** 保底期內不可提前出場：最早出場日為保底期最後一個比價日；該日尚未到則視為尚未出場 */
+    const guaranteedYmd = guaranteedObsYmd(combo);
+    if (guaranteedYmd && latest && latest < guaranteedYmd) latest = guaranteedYmd;
+    if (latest && !isValuationDateDone(latest)) return "";
     return latest;
   }
 
@@ -1206,7 +1231,10 @@
     const koExit = comboKoExitDate(combo);
     if (!koExit) return "";
     const invested = investedCapitalFromDom(combo);
-    const periods = Math.max(1, periodsElapsedWithProrationByYmd(combo, koExit));
+    const periods = Math.max(
+      getGuaranteedPeriodCount(combo),
+      periodsElapsedWithProrationByYmd(combo, koExit)
+    );
     const interestTotal = comboMonthlyInterestAmountFromDom(combo) * periods;
     const firstLine = `已收利息 ${formatFcnPeriods(periods)} 期共 ${formatFcnMoney(interestTotal)}`;
     const parts = [];
@@ -1270,7 +1298,11 @@
     if (rows.length === 0) return "";
     const met = rows.filter((s) => !!s.koEverMet);
     if (met.length === 0) return "";
-    if (met.length === rows.length) return "已提前出場";
+    if (met.length === rows.length) {
+      return comboKoExitDate(combo)
+        ? "已提前出場"
+        : `全數達 KO（保底 ${getGuaranteedPeriodCount(combo)} 期內，暫不提前出場）`;
+    }
     return met.map((s) => String(s.symbol).trim().toUpperCase()).join("、");
   }
 
@@ -1317,7 +1349,7 @@
         (els.fcnPctKo && normalizeNumericInputString(els.fcnPctKo.value)) || String(combo.koPct ?? "");
       el.setAttribute(
         "title",
-        `提前出場（KO）：自初次比價日起每日比價，若收盤曾達「期初×${koPctDisp}%」即列入摘要；全部達標為提前出場。目前：${hint}`
+        `提前出場（KO）：自初次比價日起每日比價，若收盤曾達「期初×${koPctDisp}%」即列入摘要；全部達標且已過保底 ${getGuaranteedPeriodCount(combo)} 期方為提前出場。目前：${hint}`
       );
     } else el.removeAttribute("title");
   }
@@ -1342,11 +1374,16 @@
       )}" /></td>`;
     }
     if (index === 1) {
+      return `<th scope="row" class="fcn-side-label">保底期數</th><td class="fcn-side-val"><input type="text" id="fcn-guaranteed-periods" class="fcn-cell-input mono fcn-period-blue input-use-thousands" inputmode="numeric" autocomplete="off" value="${escapeHtmlAttr(
+        formatNumericCellDisplay(combo.guaranteedPeriods)
+      )}" /></td>`;
+    }
+    if (index === 2) {
       return `<th scope="row" class="fcn-side-label">投入資金</th><td class="fcn-side-val"><input type="text" id="fcn-invested" class="fcn-cell-input mono input-use-thousands" inputmode="decimal" autocomplete="off" value="${escapeHtmlAttr(
         formatNumericCellDisplay(combo.investedCapital)
       )}" /></td>`;
     }
-    if (index === 2) {
+    if (index === 3) {
       return `<th scope="row" class="fcn-side-label">每月利息</th><td class="fcn-side-val"><span id="fcn-monthly-interest" class="fcn-computed">—</span></td>`;
     }
     return `<td colspan="2" class="fcn-side-spacer"></td>`;
@@ -1382,7 +1419,7 @@
     const tbody = els.fcnStockTbody;
     if (!tbody) return;
     const stockRows = combo.stocks.map((it, i) => renderFcnStockRowHtml(it, combo, i));
-    for (let i = combo.stocks.length; i < 3; i += 1) {
+    for (let i = combo.stocks.length; i < 4; i += 1) {
       stockRows.push(renderFcnSummaryOnlyRowHtml(combo, i));
     }
     tbody.innerHTML = stockRows.join("");
@@ -1406,6 +1443,8 @@
     combo.valuationDates = merged;
 
     if (periodEl) combo.periodMonths = normalizeNumericInputString(periodEl.value);
+    const guaranteedEl = document.getElementById("fcn-guaranteed-periods");
+    if (guaranteedEl) combo.guaranteedPeriods = normalizeNumericInputString(guaranteedEl.value);
     if (investedEl) combo.investedCapital = normalizeNumericInputString(investedEl.value);
     const domRows = [...(els.fcnStockTbody?.querySelectorAll("tr.fcn-stock-row") ?? [])];
     combo.stocks = domRows.map((tr, idx) => {
