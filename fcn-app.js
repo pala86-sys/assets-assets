@@ -491,13 +491,6 @@
     return normalizeFcnDateStr((combo.valuationDates || [])[0]);
   }
 
-  /** 最終比價日＝初次比價日 +（期間月數 − 1）月 */
-  function finalValuationYmd(combo) {
-    const slotCount = getValuationSlotCount(combo);
-    const dates = buildValuationDatesFromFirst(firstValuationYmd(combo), slotCount);
-    return normalizeFcnDateStr(dates[slotCount - 1] ?? "");
-  }
-
   /**
    * 保底期數：至少配息幾期。KO 於此期間內不觸發提前出場，且提前出場時利息不少於此期數。
    * 四捨五入後夾在 1～比價格數之間；保底 1 期＝一般 FCN（初次比價日即第一個比價日）。
@@ -509,11 +502,24 @@
     return Math.min(getValuationSlotCount(combo), Math.max(1, g));
   }
 
-  /** 保底期最後一個比價日：KO 最早可能提前出場的日期（保底 1 期時即初次比價日） */
+  /** 最終比價日在比價日陣列中的索引＝期間（月）－保底期數（不足 0 以 0 計） */
+  function finalValuationSlotIndex(combo) {
+    return Math.max(0, getValuationSlotCount(combo) - getGuaranteedPeriodCount(combo));
+  }
+
+  /** 最終比價日＝初次比價日 +（期間月數 － 保底期數）月 */
+  function finalValuationYmd(combo) {
+    const slotCount = getValuationSlotCount(combo);
+    const dates = buildValuationDatesFromFirst(firstValuationYmd(combo), slotCount);
+    return normalizeFcnDateStr(dates[finalValuationSlotIndex(combo)] ?? "");
+  }
+
+  /** 保底期最後一個比價日：KO 最早可能提前出場的日期（不晚於最終比價日；保底 1 期時即初次比價日） */
   function guaranteedObsYmd(combo) {
     const slotCount = getValuationSlotCount(combo);
     const dates = buildValuationDatesFromFirst(firstValuationYmd(combo), slotCount);
-    return normalizeFcnDateStr(dates[getGuaranteedPeriodCount(combo) - 1] ?? "");
+    const idx = Math.min(getGuaranteedPeriodCount(combo) - 1, finalValuationSlotIndex(combo));
+    return normalizeFcnDateStr(dates[idx] ?? "");
   }
 
   /** DOM 上的百分比輸入框只反映目前作用中的組合；非作用中組合一律改用該組合自己存的百分比，避免混用到別組合的門檻 */
@@ -844,14 +850,16 @@
     return { text: "追蹤中", cls: "fcn-status-tracking" };
   }
 
-  /** 下一個排定的配息週期點（用於算利息期數、到期日），非 KO 每日比價日 */
+  /** 下一個排定的配息週期點（用於算利息期數、到期日），非 KO 每日比價日；不超過最終比價日 */
   function comboNextValuationText(combo) {
     const firstYmd = firstValuationYmd(combo);
     if (!firstYmd) return "—";
     const slotCount = getValuationSlotCount(combo);
-    const dates = buildValuationDatesFromFirst(firstYmd, slotCount).slice(0, slotCount);
+    const finalYmd = finalValuationYmd(combo);
+    const dates = buildValuationDatesFromFirst(firstYmd, slotCount)
+      .slice(0, finalValuationSlotIndex(combo) + 1);
     const today = todayYmdLocal();
-    const next = dates.find((d) => d && d > today);
+    const next = dates.find((d) => d && d > today && (!finalYmd || d <= finalYmd));
     return next ? formatFcnDateSlashDisplay(next) : "—";
   }
 
@@ -1579,7 +1587,8 @@
     if (!Number.isFinite(months) || months <= 0) months = 12;
     months = Math.round(months);
     const elP = document.getElementById("fcn-desc-period");
-    if (elP) elP.textContent = String(months);
+    /** 實際最多領息期數＝期間（月）－保底期數＋1（最終比價日＝初次比價日＋(期間－保底期數)月） */
+    if (elP) elP.textContent = String(finalValuationSlotIndex(combo) + 1);
     const koElInp = els.fcnPctKo;
     let ko = koElInp ? parseNum(normalizeNumericInputString(koElInp.value)) : parseNum(combo.koPct);
     if (!Number.isFinite(ko) || ko <= 0) ko = parseNum(combo.koPct);
