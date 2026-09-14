@@ -829,10 +829,16 @@
     await backfillKiEverMetThroughFinalValuation(combo);
   }
 
+  /** 是否所有標的皆已填代號與期初價格（不論初次比價日是否已到，視為資料完備、可開始進行中） */
+  function comboAllInitialPricesFilled(combo) {
+    const stocks = combo?.stocks || [];
+    if (!stocks.length) return false;
+    return stocks.every((s) => String(s?.symbol ?? "").trim() && parseNum(s?.initialPrice) > 0);
+  }
+
   /** 組合目前狀態文字與樣式（供總覽表使用） */
   function comboStatusLabel(combo) {
-    const firstYmd = firstValuationYmd(combo);
-    if (!firstYmd || !isValuationDateDone(firstYmd)) {
+    if (!comboAllInitialPricesFilled(combo)) {
       return { text: "尚未開始", cls: "fcn-status-pending" };
     }
     const koExit = comboKoExitDate(combo);
@@ -846,8 +852,8 @@
         ? { text: "已到期（KI 觸發換股）", cls: "fcn-status-ki" }
         : { text: "已到期（拿回本金）", cls: "fcn-status-matured" };
     }
-    if (comboAnyKiMet(combo)) return { text: "追蹤中（已觸 KI，留意）", cls: "fcn-status-warning" };
-    return { text: "追蹤中", cls: "fcn-status-tracking" };
+    if (comboAnyKiMet(combo)) return { text: "進行中（已觸 KI，留意）", cls: "fcn-status-warning" };
+    return { text: "進行中", cls: "fcn-status-tracking" };
   }
 
   /** 下一個排定的配息週期點（用於算利息期數、到期日），非 KO 每日比價日；不超過最終比價日 */
